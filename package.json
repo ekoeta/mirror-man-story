@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && sed -i 's|src=\"/assets/|src=\"./assets/|g; s|href=\"/assets/|href=\"./assets/|g' dist/index.html",
     "preview": "vite preview"
   },
   "devDependencies": {
