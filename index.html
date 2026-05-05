@@ -4,8 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>镜中人 — 视觉小说</title>
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="icons.svg" />
     <style>
-      /* 防止加载时白屏闪烁 */
       body { background: #0a0a0a; }
     </style>
     <script type="module" crossorigin src="./assets/index-D2r6Sk1w.js"></script>
@@ -13,5 +15,10 @@
   </head>
   <body>
     <div id="app"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+    </script>
   </body>
 </html>
