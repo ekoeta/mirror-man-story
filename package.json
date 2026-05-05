@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && sed -i 's|src=\"/assets/|src=\"./assets/|g; s|href=\"/assets/|href=\"./assets/|g' dist/index.html",
-    "build:single": "npm run build && node scripts/inline.js",
+    "build:single": "npm run build && node scripts/inline.cjs",
     "preview": "vite preview"
   },
   "devDependencies": {
