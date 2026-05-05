@@ -119,6 +119,23 @@ html, body {
 .title-btn { padding: 14px 56px; background: transparent; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: var(--text); font-size: 1.05em; font-family: inherit; letter-spacing: 0.1em; cursor: pointer; transition: background 0.3s, border-color 0.3s; }
 .title-btn:hover { background: rgba(255,255,255,0.06); border-color: var(--accent); }
 #title-screen .continue-btn { font-size: 0.9em; border-color: rgba(255,255,255,0.1); color: var(--text-dim); }
+#title-screen .gallery-btn { margin-top: 4px; font-size: 0.85em; border-color: rgba(255,255,255,0.1); color: var(--text-dim); }
+
+/* ——— CG 画廊 ——— */
+
+#gallery-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 110; background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; }
+#gallery-overlay.active { display: flex; }
+.gallery-panel { text-align: center; max-width: 640px; width: 90%; max-height: 85vh; overflow-y: auto; }
+.gallery-panel h2 { font-size: 1.2em; font-weight: 400; color: var(--text); letter-spacing: 0.08em; margin-bottom: 28px; }
+.gallery-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 28px; }
+.gallery-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: background 0.2s; }
+.gallery-card.unlocked:hover { background: rgba(255,255,255,0.06); }
+.gallery-card.locked { opacity: 0.35; }
+.gallery-card-img { width: 72px; height: 72px; border-radius: 8px; background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 1.8em; color: var(--accent); }
+.gallery-card.locked .gallery-card-img { color: var(--text-dim); }
+.gallery-card-name { font-size: 0.95em; color: var(--text); letter-spacing: 0.05em; }
+.gallery-card.locked .gallery-card-name { color: var(--text-dim); }
+.gallery-card-quote { font-size: 0.78em; color: var(--text-dim); line-height: 1.5; max-width: 240px; }
 
 /* ——— 立绘层 ——— */
 #sprite-layer { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 5; pointer-events: none; display: flex; justify-content: center; }

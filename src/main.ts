@@ -227,11 +227,63 @@ helpBtn.addEventListener('click', (e) => { e.stopPropagation(); showHint(); });
 app.appendChild(helpBtn);
 
 // —— 标题画面 ——
+const ENDING_QUOTES: Record<string, string> = {
+  'A · 换锁': '「我的身份是我的，因为我自己抢了回来。」',
+  'B · 裂缝': '「裂缝不是失败。裂缝是光照进来的地方。」',
+  'C · 魔瓶': '「你以为打开的是解药，打开的是又一个魔瓶。」',
+  'D · 空画框': '「消失不是放弃。有些活着的方式不需要名字。」',
+};
+
 function buildEndingsHTML(): string {
   const endings = getEndings();
   if (endings.length === 0) return '';
   const all = ['A · 换锁', 'B · 裂缝', 'C · 魔瓶', 'D · 空画框'];
-  return `<div class="endings-list">${all.map(e => endings.includes(e) ? `<span class="ending-unlocked">${e}</span>` : `<span class="ending-locked">?</span>`).join(' &nbsp;')}</div>`;
+  const hasAny = endings.length > 0;
+  return `<div class="endings-list">${all.map(e => endings.includes(e) ? `<span class="ending-unlocked">${e}</span>` : `<span class="ending-locked">?</span>`).join(' &nbsp;')}</div>
+    ${hasAny ? '<button class="title-btn gallery-btn" id="btn-gallery">CG 画廊</button>' : ''}`;
+}
+
+// —— 画廊遮罩 ——
+const galleryOverlay = document.createElement('div');
+galleryOverlay.id = 'gallery-overlay';
+galleryOverlay.addEventListener('click', (e) => {
+  if (e.target === galleryOverlay) galleryOverlay.classList.remove('active');
+});
+app.appendChild(galleryOverlay);
+
+function showGallery() {
+  const endings = getEndings();
+  const all = [
+    { name: 'A · 换锁', scene: 'ch6_ending_a', quote: ENDING_QUOTES['A · 换锁'] },
+    { name: 'B · 裂缝', scene: 'ch6_ending_b', quote: ENDING_QUOTES['B · 裂缝'] },
+    { name: 'C · 魔瓶', scene: 'ch6_ending_c', quote: ENDING_QUOTES['C · 魔瓶'] },
+    { name: 'D · 空画框', scene: 'ch6_ending_d', quote: ENDING_QUOTES['D · 空画框'] },
+  ];
+  galleryOverlay.innerHTML = `
+    <div class="gallery-panel">
+      <h2>CG 画廊</h2>
+      <div class="gallery-grid">
+        ${all.map(e => endings.includes(e.name) ? `
+          <div class="gallery-card unlocked">
+            <div class="gallery-card-img">${e.name.charAt(0)}</div>
+            <span class="gallery-card-name">${e.name}</span>
+            <span class="gallery-card-quote">${e.quote}</span>
+          </div>
+        ` : `
+          <div class="gallery-card locked">
+            <div class="gallery-card-img">?</div>
+            <span class="gallery-card-name">???</span>
+            <span class="gallery-card-quote">敬请探索</span>
+          </div>
+        `).join('')}
+      </div>
+      <button class="title-btn" id="btn-gallery-close">返回</button>
+    </div>
+  `;
+  galleryOverlay.querySelector('#btn-gallery-close')!.addEventListener('click', () => {
+    galleryOverlay.classList.remove('active');
+  });
+  galleryOverlay.classList.add('active');
 }
 
 function updateTitleScreen() {
@@ -242,6 +294,11 @@ function updateTitleScreen() {
     ${getAutoSave() ? '<button class="title-btn continue-btn" id="btn-continue">继续游戏</button>' : ''}
     <button class="title-btn" id="btn-start">新的游戏</button>
   `;
+  const galleryBtn = document.getElementById('btn-gallery');
+  if (galleryBtn) {
+    galleryBtn.addEventListener('click', () => showGallery());
+  }
+
   document.getElementById('btn-start')!.addEventListener('click', () => {
     titleScreen.classList.add('hidden');
     menuBtn.classList.add('visible');
@@ -343,6 +400,12 @@ subscribe(state => {
       setTimeout(() => {
         try { audioEngine.setMood(mood); } catch {}
       }, 0);
+      // 切换 BGM
+      if (scene.bgm) {
+        audioEngine.playBgm(scene.bgm);
+      } else {
+        audioEngine.stopBgm(1.5);
+      }
       transitionOverlay.classList.remove('active');
     };
 

@@ -15,6 +15,11 @@ export class AudioEngine {
   private currentMood: Mood = 'silent';
   private currentLayers: SoundLayer[] = [];
   private fadeTimer: number | null = null;
+  // BGM
+  private bgmGain: GainNode | null = null;
+  private bgmSource: AudioBufferSourceNode | null = null;
+  private currentBgm: string = '';
+  private bgmVolume = 0.5;
 
   private moodParams: Record<Mood, {
     drones: Array<{ freq: number; type: OscillatorType; gain: number; detune?: number }>;
@@ -197,6 +202,67 @@ export class AudioEngine {
       this.currentLayers = [];
     }
     this.currentMood = 'silent';
+    this.stopBgm(0.5);
+  }
+
+  // —— BGM 音乐播放 ——
+
+  async playBgm(url: string, fadeTime = 1.5): Promise<void> {
+    if (!this.ctx || !this.masterGain) return;
+    if (url === this.currentBgm) return;
+    this.currentBgm = url;
+
+    // 停止当前 BGM
+    await this.stopBgm(fadeTime);
+
+    // 降低氛围音量给 BGM 让路
+    if (this.masterGain) {
+      this.masterGain.gain.linearRampToValueAtTime(0.3, this.ctx.currentTime + fadeTime);
+    }
+
+    if (!this.bgmGain) {
+      this.bgmGain = this.ctx.createGain();
+      this.bgmGain.gain.value = 0;
+      this.bgmGain.connect(this.masterGain);
+    }
+
+    try {
+      const res = await fetch(url);
+      const buf = await res.arrayBuffer();
+      const audioBuf = await this.ctx.decodeAudioData(buf);
+      const src = this.ctx.createBufferSource();
+      src.buffer = audioBuf;
+      src.loop = true;
+      src.connect(this.bgmGain);
+      src.start();
+      this.bgmSource = src;
+      this.bgmGain.gain.linearRampToValueAtTime(this.bgmVolume, this.ctx.currentTime + fadeTime);
+    } catch {
+      this.currentBgm = '';
+    }
+  }
+
+  async stopBgm(fadeTime = 1.5): Promise<void> {
+    const old = this.bgmSource;
+    if (!old) return;
+    this.bgmSource = null;
+    this.currentBgm = '';
+
+    if (this.bgmGain && this.ctx) {
+      this.bgmGain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + fadeTime);
+      // 恢复氛围音量
+      this.masterGain!.gain.linearRampToValueAtTime(0.8, this.ctx.currentTime + fadeTime);
+    }
+
+    await new Promise(r => setTimeout(r, fadeTime * 1000 + 100));
+    try { old.stop(); } catch {}
+  }
+
+  setBgmVolume(v: number): void {
+    this.bgmVolume = Math.max(0, Math.min(1, v));
+    if (this.bgmGain && this.ctx && this.bgmSource) {
+      this.bgmGain.gain.linearRampToValueAtTime(this.bgmVolume, this.ctx.currentTime + 0.3);
+    }
   }
 
   private createDrone(freq: number, type: OscillatorType, gain: number, detune: number): SoundLayer | null {
