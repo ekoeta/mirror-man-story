@@ -39,7 +39,6 @@ export function load(slot: number): boolean {
   const saves = loadAll();
   const entry = saves.find(s => s.slot === slot);
   if (!entry) return false;
-  // 状态恢复由 ScriptEngine 处理
   (window as any).__loadData = entry;
   return true;
 }

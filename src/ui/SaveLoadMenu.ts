@@ -6,8 +6,11 @@ import type { SaveData } from '../engine/types';
 export class SaveLoadMenu {
   private overlay: HTMLDivElement;
   private visible = false;
+  private onReturnTitle: (() => void) | null;
+  private deletingIndex = -1;
 
-  constructor(container: HTMLElement) {
+  constructor(container: HTMLElement, onReturnTitle?: () => void) {
+    this.onReturnTitle = onReturnTitle || null;
     this.overlay = document.createElement('div');
     this.overlay.id = 'save-menu';
     this.overlay.addEventListener('click', (e) => {
@@ -48,10 +51,16 @@ export class SaveLoadMenu {
         <div class="save-slots">
           ${slots.map((s, i) => this.renderSlot(s, i)).join('')}
         </div>
+        <button class="return-title-btn" id="return-title-btn">← 返回标题</button>
       </div>
     `;
 
-    // 绑定事件
+    this.overlay.querySelector('#return-title-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.hide();
+      this.onReturnTitle?.();
+    });
+
     slots.forEach((_, i) => {
       const slotEl = this.overlay.querySelector(`#save-slot-${i}`);
       if (!slotEl) return;
@@ -73,8 +82,24 @@ export class SaveLoadMenu {
 
       slotEl.querySelector('.btn-delete')?.addEventListener('click', (e) => {
         e.stopPropagation();
-        remove(i);
-        this.render();
+        if (this.deletingIndex === i) {
+          remove(i);
+          this.deletingIndex = -1;
+          this.render();
+        } else {
+          this.deletingIndex = i;
+          const btn = slotEl.querySelector('.btn-delete') as HTMLButtonElement;
+          if (btn) {
+            btn.textContent = '确认';
+            btn.classList.add('confirm');
+          }
+          setTimeout(() => {
+            if (this.deletingIndex === i) {
+              this.deletingIndex = -1;
+              this.render();
+            }
+          }, 3000);
+        }
       });
     });
   }
@@ -138,7 +163,27 @@ export class SaveLoadMenu {
       'ch2_suhe_past': '第二章 · 苏鹤的过去',
       'ch2_counterplan': '第二章 · 对策',
       'ch2_converge': '第二章 · 终局',
-      'ch3_start': '第三章 · 替换',
+      'ch3_start': '第三章 · 失联',
+      'ch3_bank': '第三章 · 银行',
+      'ch3_police': '第三章 · 报警',
+      'ch3_evidence': '第三章 · 证据',
+      'ch3_hospital': '第三章 · 七院',
+      'ch3_ask_suhe': '第三章 · 追问苏鹤',
+      'ch3_end': '第三章 · 裂痕',
+      'ch4_start': '第四章 · 余波',
+      'ch4_fallout': '第四章 · 坠落',
+      'ch4_margins': '第四章 · 边缘',
+      'ch4_meet_suhe': '第四章 · 再见苏鹤',
+      'ch4_contact_publisher': '第四章 · 联系出版社',
+      'ch5_start': '第五章 · 发布会前',
+      'ch5_arrival': '第五章 · 到场',
+      'ch5_confront': '第五章 · 对峙',
+      'ch5_rendezvous': '第五章 · 会合',
+      'ch5_climax': '第五章 · 高潮',
+      'ch6_ending_a': '结局 A · 换锁',
+      'ch6_ending_b': '结局 B · 裂缝',
+      'ch6_ending_c': '结局 C · 魔瓶',
+      'ch6_ending_d': '结局 D · 空画框',
     };
     return labels[id] || id;
   }

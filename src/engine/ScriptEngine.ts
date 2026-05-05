@@ -7,12 +7,14 @@ import {
   setPlaying,
   setFlags,
   addHistory,
+  markRead,
+  isRead,
+  setSkipping,
 } from './GameState';
 import { autoSave, getLoadData, clearLoadData } from './SaveManager';
 
 let scenes: Map<string, Scene> = new Map();
 
-// 注册场景
 export function registerScenes(sceneList: Scene[]) {
   scenes.clear();
   sceneList.forEach(s => scenes.set(s.id, s));
@@ -22,7 +24,6 @@ function currentScene(): Scene | undefined {
   return scenes.get(getState().currentScene);
 }
 
-// ---- 对外事件回调 ----
 type EventHandler = {
   onDialogue: (line: DialogueLine, onComplete: () => void) => void;
   onChoice: (choices: Choice[], onSelect: (c: Choice) => void) => void;
@@ -35,8 +36,6 @@ let handler: EventHandler | null = null;
 export function setHandler(h: EventHandler) {
   handler = h;
 }
-
-// ---- 主流程 ----
 
 export function startGame() {
   const data = getLoadData();
@@ -58,7 +57,6 @@ export function runScene() {
     return;
   }
 
-  // onEnter
   if (scene.onEnter?.setFlags) {
     setFlags(scene.onEnter.setFlags);
   }
@@ -80,6 +78,14 @@ export function runScene() {
 
 function showDialogue(line: DialogueLine) {
   addHistory(line);
+  const state = getState();
+  const alreadyRead = isRead(state.currentScene, state.dialogueIndex);
+  markRead(state.currentScene, state.dialogueIndex);
+
+  if (state.isSkipping && state.skipMode === 'read' && !alreadyRead) {
+    setSkipping(false);
+  }
+
   handler?.onDialogue(line, () => {
     advanceDialogue();
     runScene();

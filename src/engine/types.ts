@@ -1,11 +1,11 @@
 // 视觉小说引擎类型定义
 
 export interface DialogueLine {
-  character?: string; // undefined = 旁白
+  character?: string;
   text: string;
   expression?: string;
-  position?: 'left' | 'center' | 'right'; // 立绘位置
-  spriteAction?: 'show' | 'hide' | 'dim';  // 立绘动作
+  position?: 'left' | 'center' | 'right';
+  spriteAction?: 'show' | 'hide' | 'dim';
   effect?: DialogueEffect;
 }
 
@@ -31,11 +31,14 @@ export interface SpriteConfig {
   expression?: string;
 }
 
+export type AudioMood = 'silent' | 'dark' | 'morning' | 'neutral' | 'tense' | 'sad' | 'digital' | 'climax';
+
 export interface Scene {
   id: string;
   background?: string;
   bgm?: string;
-  sprites?: SpriteConfig[]; // 场景进入时的立绘配置
+  mood?: AudioMood;
+  sprites?: SpriteConfig[];
   dialogues: DialogueLine[];
   choices?: Choice[];
   nextScene?: string;
@@ -45,8 +48,8 @@ export interface Scene {
 export interface Character {
   id: string;
   name: string;
-  color: string; // 名字显示颜色
-  sprites?: Record<string, string>; // expression -> sprite url
+  color: string;
+  sprites?: Record<string, string>;
 }
 
 export interface SaveData {
@@ -55,14 +58,18 @@ export interface SaveData {
   sceneId: string;
   dialogueIndex: number;
   flags: Record<string, boolean>;
-  description: string; // 简短描述，用于存档界面
+  description: string;
 }
 
 export interface GameState {
   currentScene: string;
   dialogueIndex: number;
   flags: Record<string, boolean>;
-  history: DialogueLine[]; // 已显示的历史记录
+  history: DialogueLine[];
+  readLines: string[];
+  isSkipping: boolean;
+  skipMode: 'read' | 'all';
+  isAuto: boolean;
   isChoosing: boolean;
   isPlaying: boolean;
 }

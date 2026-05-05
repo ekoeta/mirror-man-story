@@ -1,4 +1,21 @@
 import type { DialogueLine } from '../engine/types';
+import { getState, isRead } from '../engine/GameState';
+
+const SPEED_KEY = 'mirror-man-speed';
+const SPEEDS: Record<string, number> = { slow: 70, medium: 35, fast: 10 };
+
+function getSpeed(): number {
+  const v = localStorage.getItem(SPEED_KEY);
+  return SPEEDS[v as string] ?? 35;
+}
+
+export function getTextSpeed(): string {
+  return localStorage.getItem(SPEED_KEY) ?? 'medium';
+}
+
+export function setTextSpeed(v: string) {
+  if (SPEEDS[v]) localStorage.setItem(SPEED_KEY, v);
+}
 
 export class TextBox {
   private el: HTMLDivElement;
@@ -7,6 +24,7 @@ export class TextBox {
   private continueHint: HTMLDivElement;
   private resolve: (() => void) | null = null;
   private typingTimer: number | null = null;
+  private autoTimer: number | null = null;
 
   constructor(container: HTMLElement) {
     this.el = document.createElement('div');
@@ -29,6 +47,7 @@ export class TextBox {
 
   show(line: DialogueLine, onComplete: () => void) {
     this.resolve = onComplete;
+    this.cancelAuto();
 
     if (line.character) {
       this.nameEl.textContent = line.character;
@@ -37,29 +56,29 @@ export class TextBox {
       this.nameEl.style.display = 'none';
     }
 
-    // 打字机效果
     const fullText = line.text;
     this.textEl.textContent = '';
     this.el.classList.add('active');
     this.continueHint.classList.remove('visible');
 
     let i = 0;
-    const speed = 35; // ms per character
-    if (this.typingTimer) clearInterval(this.typingTimer);
+    if (this.typingTimer) clearTimeout(this.typingTimer);
 
-    this.typingTimer = window.setInterval(() => {
+    const typeNext = () => {
+      const s = getState().isSkipping ? 5 : getSpeed();
       if (i < fullText.length) {
         this.textEl.textContent += fullText[i];
         i++;
+        this.typingTimer = window.setTimeout(typeNext, s);
       } else {
-        clearInterval(this.typingTimer!);
         this.typingTimer = null;
         this.continueHint.classList.add('visible');
+        this.checkAutoAdvance();
       }
-    }, speed);
+    };
+    this.typingTimer = window.setTimeout(typeNext, getState().isSkipping ? 5 : getSpeed());
   }
 
-  // 供外部调用（点击背景推进对话）
   click() {
     this.onClick();
   }
@@ -68,13 +87,26 @@ export class TextBox {
     return this.el.classList.contains('active');
   }
 
+  checkAuto() {
+    this.checkAutoAdvance();
+  }
+
+  cancelAuto() {
+    if (this.autoTimer) {
+      clearTimeout(this.autoTimer);
+      this.autoTimer = null;
+    }
+  }
+
   private onClick() {
+    this.cancelAuto();
     if (this.typingTimer) {
-      clearInterval(this.typingTimer);
+      clearTimeout(this.typingTimer);
       this.typingTimer = null;
       const line = this.textEl.dataset.fullText;
       this.textEl.textContent = line ?? this.textEl.textContent;
       this.continueHint.classList.add('visible');
+      this.checkAutoAdvance();
       return;
     }
     if (this.resolve && this.continueHint.classList.contains('visible')) {
@@ -92,5 +124,20 @@ export class TextBox {
 
   hide() {
     this.el.classList.remove('active');
+    this.cancelAuto();
+  }
+
+  private checkAutoAdvance() {
+    const state = getState();
+    if (!this.resolve || !this.continueHint.classList.contains('visible')) return;
+
+    if (state.isSkipping) {
+      const skippable = state.skipMode === 'all' || isRead(state.currentScene, state.dialogueIndex);
+      if (skippable) {
+        this.autoTimer = window.setTimeout(() => this.onClick(), 120);
+      }
+    } else if (state.isAuto) {
+      this.autoTimer = window.setTimeout(() => this.onClick(), 2000);
+    }
   }
 }

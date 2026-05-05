@@ -5,16 +5,27 @@ type OnComplete = () => void;
 export class SpecialPanels {
   private container: HTMLElement;
   private overlay: HTMLDivElement;
+  private flashEl: HTMLDivElement;
 
   constructor(container: HTMLElement) {
     this.container = container;
     this.overlay = document.createElement('div');
     this.overlay.id = 'special-overlay';
     this.container.appendChild(this.overlay);
+
+    this.flashEl = document.createElement('div');
+    this.flashEl.id = 'flash-overlay';
+    this.container.appendChild(this.flashEl);
   }
 
   show(effect: DialogueEffect, onComplete: OnComplete) {
     switch (effect.type) {
+      case 'shake':
+        this.doShake(onComplete);
+        break;
+      case 'flash':
+        this.doFlash(onComplete);
+        break;
       case 'photo_compare':
         this.showPhotoCompare(effect.before, effect.after, onComplete);
         break;
@@ -79,7 +90,6 @@ export class SpecialPanels {
       </div>
     `;
     this.overlay.classList.add('active');
-    // 滚动到底部
     const list = this.overlay.querySelector('.chat-list')!;
     list.scrollTop = list.scrollHeight;
 
@@ -128,8 +138,23 @@ export class SpecialPanels {
     done();
   }
 
-  // 重置聊天记录（场景切换时调用）
   resetChat() {
     this.chatMessages = [];
+  }
+
+  private doShake(done: OnComplete) {
+    this.container.classList.add('app-shaking');
+    setTimeout(() => {
+      this.container.classList.remove('app-shaking');
+      done();
+    }, 500);
+  }
+
+  private doFlash(done: OnComplete) {
+    this.flashEl.classList.add('active');
+    setTimeout(() => {
+      this.flashEl.classList.remove('active');
+      done();
+    }, 200);
   }
 }
